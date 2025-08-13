@@ -3,7 +3,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import current_app as app
 
-
 def send_email(to_email: str, subject: str, html: str):
     host = app.config['SMTP_HOST']
     port = app.config['SMTP_PORT']
@@ -22,9 +21,13 @@ def send_email(to_email: str, subject: str, html: str):
     msg['To'] = to_email
     msg.attach(MIMEText(html, 'html', 'utf-8'))
 
-    with smtplib.SMTP(host, port) as server:
-        if use_tls:
-            server.starttls()
-        server.login(user, pwd)
-        server.sendmail(from_email, [to_email], msg.as_string())
+    try:
+        with smtplib.SMTP(host, port) as server:
+            if use_tls:
+                server.starttls()
+            server.login(user, pwd)
+            server.sendmail(from_email, [to_email], msg.as_string())
+    except Exception as e:
+        app.logger.error(f'Error al enviar correo: {e}')
+        return False
     return True
