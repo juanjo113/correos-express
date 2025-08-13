@@ -18,4 +18,4 @@ def send_alerts():
     return f"Se enviaron {len(vehicles_due)} alertas."
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
