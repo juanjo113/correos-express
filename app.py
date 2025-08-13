@@ -1,8 +1,7 @@
 from flask import Flask, render_template, request
 from email_utils import send_email
 from datetime import date
-
-# Definir db en models.py y luego importarlo aquí
+from flask_migrate import Migrate  # Importar Migrate
 from models import db, get_all_vehicles, get_vehicles_due_today
 
 app = Flask(__name__)
@@ -12,8 +11,9 @@ app.secret_key = 'clave_secreta_para_flash'  # si usas flash messages
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vehicles.db'  # Ajusta según tu DB
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Inicializar db después de configurar la app
+# Inicializar db y Migrate
 db.init_app(app)
+migrate = Migrate(app, db)  # Inicializamos Migrate con la app y db
 
 ALERT_DAYS = 7  # Definición de ALERT_DAYS
 
@@ -37,7 +37,9 @@ def send_alerts():
 
 @app.route("/add", methods=["GET", "POST"])
 def add_vehicle():
+    from models import Vehicle
     if request.method == "POST":
+        # Recuperar los datos del formulario y añadir el vehículo
         make = request.form["make"]
         model = request.form["model"]
         plate = request.form["plate"]
@@ -54,11 +56,12 @@ def add_vehicle():
         )
         db.session.add(new_vehicle)
         db.session.commit()
-        return redirect(url_for("home"))
+        return redirect(url_for("home"))  # Redirige a la página principal
     return render_template("add_vehicle.html")
 
 @app.route("/edit/<int:vehicle_id>", methods=["GET", "POST"])
 def edit_vehicle(vehicle_id):
+    from models import Vehicle
     vehicle = Vehicle.query.get_or_404(vehicle_id)
     if request.method == "POST":
         vehicle.make = request.form["make"]
@@ -73,6 +76,7 @@ def edit_vehicle(vehicle_id):
 
 @app.route("/delete/<int:vehicle_id>", methods=["POST"])
 def delete_vehicle(vehicle_id):
+    from models import Vehicle
     vehicle = Vehicle.query.get_or_404(vehicle_id)
     db.session.delete(vehicle)
     db.session.commit()
