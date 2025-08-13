@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Sistema de Vehículos activo"
+    return render_template("index.html")
 
 # Endpoint para enviar alertas
 @app.route("/send_alerts")
