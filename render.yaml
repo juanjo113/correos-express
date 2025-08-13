@@ -20,25 +20,3 @@ services:
         value: "tu-correo@gmail.com"
       - key: ALERT_DAYS
         value: "14"
-
-  - type: worker
-    name: vehiculos-scheduler
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python scheduler.py
-    envVars:
-      - key: DATABASE_URL
-        value: "postgres://usuario:password@host:puerto/dbname"
-      - key: SMTP_HOST
-        value: smtp.gmail.com
-      - key: SMTP_PORT
-        value: "587"
-      - key: SMTP_USER
-        value: "tu-correo@gmail.com"
-      - key: SMTP_PASS
-        value: "tu-app-password"
-      - key: FROM_EMAIL
-        value: "tu-correo@gmail.com"
-      - key: ALERT_DAYS
-        value: "14"
