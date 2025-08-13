@@ -49,5 +49,6 @@ services:
 
 databases:
   - name: vehiculos-db
-    engine: postgresql
+    type: postgresql
     plan: free
+
