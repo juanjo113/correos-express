@@ -35,7 +35,7 @@ def send_alerts():
         send_email(vehicle)
     return f"Se enviaron {len(vehicles_due)} alertas."
 
-@app.route("/add", methods=["GET", "POST"])
+@app.route("/add", methods=["GET", "POST", "HEAD"])
 def add_vehicle():
     from models import Vehicle
     if request.method == "POST":
@@ -59,7 +59,7 @@ def add_vehicle():
         return redirect(url_for("home"))  # Redirige a la página principal
     return render_template("add_vehicle.html")
 
-@app.route("/edit/<int:vehicle_id>", methods=["GET", "POST"])
+@app.route("/edit/<int:vehicle_id>", methods=["GET", "POST", "HEAD"])
 def edit_vehicle(vehicle_id):
     from models import Vehicle
     vehicle = Vehicle.query.get_or_404(vehicle_id)
