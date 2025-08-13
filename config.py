@@ -1,4 +1,4 @@
-```python
+python
 import os
 
 class Config:
@@ -21,4 +21,3 @@ class Config:
 
     # Ventana de aviso (días antes)
     ALERT_DAYS = int(os.getenv('ALERT_DAYS', '14'))
-```
