@@ -1,4 +1,4 @@
-```python
+python
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -20,4 +20,3 @@ class Vehicle(db.Model):
 
     def __repr__(self):
         return f"<Vehicle {self.plate}>"
-```
