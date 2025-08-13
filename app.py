@@ -3,17 +3,16 @@ from email_utils import send_email
 from datetime import date
 from flask_migrate import Migrate
 from models import db, get_all_vehicles, get_vehicles_due_today
-
 import os
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_para_flash")
 
-# Configuración de la base de datos para Render (PostgreSQL)
+# Configuración de la base de datos
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     'DATABASE_URL',
-    'sqlite:///vehicles.db'  # Fallback si no hay variable de entorno
-).replace("postgres://", "postgresql://")  # Fix para SQLAlchemy
+    'sqlite:///vehicles.db'
+).replace("postgres://", "postgresql://")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -22,6 +21,10 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 ALERT_DAYS = 7
+
+# Crear tablas automáticamente si no existen
+with app.app_context():
+    db.create_all()
 
 # Evitar error con HEAD requests
 @app.before_request
