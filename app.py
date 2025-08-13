@@ -1,6 +1,6 @@
 from flask import Flask
 from models import get_vehicles_due_today
-from email_utils import send_alert_email
+from email_utils import send_email
 from datetime import datetime
 
 app = Flask(__name__)
