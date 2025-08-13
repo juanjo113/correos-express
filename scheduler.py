@@ -1,4 +1,3 @@
-```python
 import time
 from datetime import datetime, timedelta
 from flask import Flask
@@ -81,4 +80,3 @@ if __name__ == '__main__':
             # Log simple
             print('Error en scheduler:', e, flush=True)
         time.sleep(CHECK_INTERVAL_SECONDS)
-```
