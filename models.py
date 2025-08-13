@@ -21,7 +21,6 @@ class Vehicle(db.Model):
         return f"<Vehicle {self.plate}>"
 
 def get_all_vehicles(query=None):
-    # Si hay un término de búsqueda, filtra por marca, modelo o matrícula
     if query:
         vehicles = Vehicle.query.filter(
             (Vehicle.make.ilike(f'%{query}%')) |
@@ -29,7 +28,7 @@ def get_all_vehicles(query=None):
             (Vehicle.plate.ilike(f'%{query}%'))
         ).all()
     else:
-        vehicles = Vehicle.query.all()  # Si no hay búsqueda, trae todos los vehículos
+        vehicles = Vehicle.query.all()
     return vehicles
 
 def get_vehicles_due_today():
