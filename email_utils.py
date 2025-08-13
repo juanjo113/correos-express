@@ -1,4 +1,4 @@
-```python
+python
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -29,4 +29,3 @@ def send_email(to_email: str, subject: str, html: str):
         server.login(user, pwd)
         server.sendmail(from_email, [to_email], msg.as_string())
     return True
-```
