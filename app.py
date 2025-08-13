@@ -8,15 +8,16 @@ app.secret_key = 'clave_secreta_para_flash'  # si usas flash messages
 # Configuración de la base de datos
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vehicles.db'  # Ajusta según tu DB
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-from models import db  # Aquí importamos `db` después de que Flask esté inicializado
+from models import db  # Mover la importación aquí para evitar ciclo de importación
 
-db.init_app(app)  # Inicializamos SQLAlchemy
+db.init_app(app)
 
-ALERT_DAYS = 7  # define esta variable
+ALERT_DAYS = 7  # Define esta variable
 
 @app.route("/")
 def home():
-    from models import get_all_vehicles  # Importamos dentro de la función para evitar importaciones circulares
+    # Importar aquí dentro para evitar la circularidad
+    from models import get_all_vehicles
     q = request.args.get("q", "")
     vehicles = get_all_vehicles(q)  # Llama a la función
     return render_template(
@@ -28,10 +29,11 @@ def home():
 
 @app.route("/send_alerts")
 def send_alerts():
-    from models import get_vehicles_due_today  # Importamos aquí para evitar importaciones circulares
+    # Importar aquí dentro para evitar la circularidad
+    from models import get_vehicles_due_today
     vehicles_due = get_vehicles_due_today(days_before=ALERT_DAYS)
     for vehicle in vehicles_due:
-        send_email(vehicle)  # Asegúrate de que send_email reciba los parámetros correctos
+        send_email(vehicle)
     return f"Se enviaron {len(vehicles_due)} alertas."
 
 # Aquí añade endpoints de ejemplo para que no fallen los url_for en plantilla:
