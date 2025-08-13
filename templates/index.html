@@ -1,1 +1,59 @@
-<contenido de index.html aquí>
+```html
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3">Mis vehículos</h1>
+  <a class="btn btn-primary" href="{{ url_for('add_vehicle') }}">Añadir vehículo</a>
+</div>
+<form class="mb-3" method="get">
+  <div class="input-group">
+    <input name="q" type="text" class="form-control" placeholder="Buscar por marca, modelo, matrícula o email" value="{{ request.args.get('q','') }}"/>
+    <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+  </div>
+</form>
+<table class="table table-striped align-middle">
+  <thead>
+    <tr>
+      <th>Matrícula</th>
+      <th>Vehículo</th>
+      <th>Email</th>
+      <th>Cambio aceite</th>
+      <th>ITV</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for v in vehicles %}
+    <tr>
+      <td><span class="badge text-bg-dark">{{ v.plate }}</span></td>
+      <td>{{ v.make }} {{ v.model }}</td>
+      <td>{{ v.owner_email }}</td>
+      <td>
+        {% if v.oil_date %}
+          <span class="{{ 'due' if v.oil_date <= today else 'upcoming' if (v.oil_date - today).days <= config['ALERT_DAYS'] else '' }}">
+            {{ v.oil_date.strftime('%d/%m/%Y') }}
+          </span>
+        {% else %}—{% endif %}
+      </td>
+      <td>
+        {% if v.itv_date %}
+          <span class="{{ 'due' if v.itv_date <= today else 'upcoming' if (v.itv_date - today).days <= config['ALERT_DAYS'] else '' }}">
+            {{ v.itv_date.strftime('%d/%m/%Y') }}
+          </span>
+        {% else %}—{% endif %}
+      </td>
+      <td class="text-end">
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('edit_vehicle', vehicle_id=v.id) }}">Editar</a>
+        <form action="{{ url_for('delete_vehicle', vehicle_id=v.id) }}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este vehículo?')">
+          <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if not vehicles %}
+  <div class="text-center text-muted">Aún no hay vehículos. ¡Añade el primero!</div>
+{% endif %}
+{% endblock %}
+```
