@@ -19,3 +19,10 @@ class Vehicle(db.Model):
 
     def __repr__(self):
         return f"<Vehicle {self.plate}>"
+# Definir la función get_vehicles_due_today
+def get_vehicles_due_today():
+    today = datetime.utcnow().date()  # Obtiene la fecha actual (sin la parte de la hora)
+    vehicles_due_today = Vehicle.query.filter(
+        (Vehicle.oil_date == today) | (Vehicle.itv_date == today)
+    ).all()
+    return vehicles_due_today
