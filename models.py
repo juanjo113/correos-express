@@ -1,39 +1,40 @@
-from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
-from datetime import date
-from email_utils import send_email
+from datetime import datetime
 
-app = Flask(__name__)
+db = SQLAlchemy()
 
-# Configuración de la base de datos
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vehicles.db'  # Ajusta según tu DB
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-from models import db  # Mover la importación aquí para evitar ciclo de importación
+class Vehicle(db.Model):
+    __tablename__ = 'vehicles'
+    id = db.Column(db.Integer, primary_key=True)
+    make = db.Column(db.String(120), nullable=False)
+    model = db.Column(db.String(120), nullable=False)
+    plate = db.Column(db.String(20), unique=True, nullable=False)
+    owner_email = db.Column(db.String(255), nullable=False)
+    oil_date = db.Column(db.Date, nullable=True)
+    itv_date = db.Column(db.Date, nullable=True)
+    oil_notified_on = db.Column(db.Date, nullable=True)
+    itv_notified_on = db.Column(db.Date, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-db.init_app(app)
+    def __repr__(self):
+        return f"<Vehicle {self.plate}>"
 
-ALERT_DAYS = 7  # Definición de ALERT_DAYS
+def get_all_vehicles(query=None):
+    # Si hay un término de búsqueda, filtra por marca, modelo o matrícula
+    if query:
+        vehicles = Vehicle.query.filter(
+            (Vehicle.make.ilike(f'%{query}%')) |
+            (Vehicle.model.ilike(f'%{query}%')) |
+            (Vehicle.plate.ilike(f'%{query}%'))
+        ).all()
+    else:
+        vehicles = Vehicle.query.all()  # Si no hay búsqueda, trae todos los vehículos
+    return vehicles
 
-@app.route("/")
-def home():
-    from models import get_all_vehicles  # Importamos dentro de la función para evitar circularidad
-    q = request.args.get("q", "")  # Obtiene el término de búsqueda (si lo hay)
-    vehicles = get_all_vehicles(q)  # Llama a la función para obtener los vehículos
-    return render_template(
-        "index.html",  # Plantilla
-        vehicles=vehicles,
-        today=date.today(),
-        config={"ALERT_DAYS": ALERT_DAYS}
-    )
-
-@app.route("/send_alerts")
-def send_alerts():
-    from models import get_vehicles_due_today  # Importamos aquí para evitar circularidad
-    vehicles_due = get_vehicles_due_today()
-    # Aquí asegúrate de que send_email sea adecuado
-    for vehicle in vehicles_due:
-        send_email(vehicle)
-    return f"Se enviaron {len(vehicles_due)} alertas."
-
-if __name__ == "__main__":
-    app.run(debug=True)
+def get_vehicles_due_today():
+    today = datetime.utcnow().date()
+    vehicles_due_today = Vehicle.query.filter(
+        (Vehicle.oil_date == today) | (Vehicle.itv_date == today)
+    ).all()
+    return vehicles_due_today
