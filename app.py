@@ -1,102 +1,84 @@
 from flask import Flask, render_template, request, redirect, url_for
-from email_utils import send_email
-from datetime import date
-from flask_migrate import Migrate
-from models import db, get_all_vehicles, get_vehicles_due_today
-import os
+from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail, Message
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_para_flash")
-
-# Configuración de la base de datos
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-    'DATABASE_URL',
-    'sqlite:///vehicles.db'
-).replace("postgres://", "postgresql://")
-
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vehiculos.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['MAIL_USERNAME'] = 'tucorreo@example.com'  # Cambia esto por tu correo
+app.config['MAIL_PASSWORD'] = 'tucontraseña'  # Cambia esto por tu contraseña
+app.config['MAIL_DEFAULT_SENDER'] = 'tucorreo@example.com'  # Cambia esto
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
 
-# Inicializar db y Migrate
-db.init_app(app)
-migrate = Migrate(app, db)
+db = SQLAlchemy(app)
+mail = Mail(app)
 
-ALERT_DAYS = 7
+class Vehiculo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    marca = db.Column(db.String(50), nullable=False)
+    modelo = db.Column(db.String(50), nullable=False)
+    fecha_cambio_aceite = db.Column(db.Date, nullable=False)
+    fecha_itv = db.Column(db.Date, nullable=False)
 
-# Crear tablas automáticamente si no existen
-with app.app_context():
-    db.create_all()
+    def __repr__(self):
+        return f'<Vehiculo {self.marca} {self.modelo}>'
 
-# Evitar error con HEAD requests (health check de Render)
-@app.before_request
-def handle_head_requests():
-    if request.method == "HEAD":
-        return "", 200
+# Verifica si es necesario enviar un correo
+def verificar_fechas():
+    vehiculos = Vehiculo.query.all()
+    hoy = datetime.today().date()
 
-@app.route("/", methods=["GET"])
-def home():
-    q = request.args.get("q", "")
-    vehicles = get_all_vehicles(q)
-    return render_template(
-        "index.html",
-        vehicles=vehicles,
-        today=date.today(),
-        config={"ALERT_DAYS": ALERT_DAYS}
+    for vehiculo in vehiculos:
+        if vehiculo.fecha_cambio_aceite <= hoy:
+            enviar_correo(vehiculo, 'Cambio de aceite')
+        if vehiculo.fecha_itv <= hoy:
+            enviar_correo(vehiculo, 'ITV')
+
+# Función para enviar correo
+def enviar_correo(vehiculo, tipo):
+    message = Message(
+        f'{tipo} para tu vehículo {vehiculo.marca} {vehiculo.modelo}',
+        recipients=['tucorreo@example.com'],  # Cambia esto por tu correo
+        body=f'Es hora de realizar el {tipo} para el vehículo {vehiculo.marca} {vehiculo.modelo}.'
     )
+    mail.send(message)
 
-@app.route("/send_alerts", methods=["GET"])
-def send_alerts():
-    vehicles_due = get_vehicles_due_today()
-    for vehicle in vehicles_due:
-        send_email(vehicle)
-    return f"Se enviaron {len(vehicles_due)} alertas."
+# Tarea para verificar las fechas cada día
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=verificar_fechas, trigger="interval", days=1)
+scheduler.start()
 
-@app.route("/add", methods=["GET", "POST"])
+@app.route('/')
+def index():
+    vehiculos = Vehiculo.query.all()
+    return render_template('index.html', vehiculos=vehiculos)
+
+@app.route('/add', methods=['GET', 'POST'])
 def add_vehicle():
-    from models import Vehicle
-    if request.method == "POST":
-        make = request.form["make"]
-        model = request.form["model"]
-        plate = request.form["plate"]
-        owner_email = request.form["owner_email"]
-        oil_date = request.form["oil_date"]
-        itv_date = request.form["itv_date"]
+    if request.method == 'POST':
+        marca = request.form['marca']
+        modelo = request.form['modelo']
+        fecha_cambio_aceite = datetime.strptime(request.form['fecha_cambio_aceite'], '%Y-%m-%d').date()
+        fecha_itv = datetime.strptime(request.form['fecha_itv'], '%Y-%m-%d').date()
 
-        new_vehicle = Vehicle(
-            make=make,
-            model=model,
-            plate=plate,
-            owner_email=owner_email,
-            oil_date=oil_date if oil_date else None,
-            itv_date=itv_date if itv_date else None
+        nuevo_vehiculo = Vehiculo(
+            marca=marca,
+            modelo=modelo,
+            fecha_cambio_aceite=fecha_cambio_aceite,
+            fecha_itv=fecha_itv
         )
-        db.session.add(new_vehicle)
+
+        db.session.add(nuevo_vehiculo)
         db.session.commit()
-        return redirect(url_for("home"))
-    return render_template("add_vehicle.html")
 
-@app.route("/edit/<int:vehicle_id>", methods=["GET", "POST"])
-def edit_vehicle(vehicle_id):
-    from models import Vehicle
-    vehicle = Vehicle.query.get_or_404(vehicle_id)
-    if request.method == "POST":
-        vehicle.make = request.form["make"]
-        vehicle.model = request.form["model"]
-        vehicle.plate = request.form["plate"]
-        vehicle.owner_email = request.form["owner_email"]
-        vehicle.oil_date = request.form["oil_date"]
-        vehicle.itv_date = request.form["itv_date"]
-        db.session.commit()
-        return redirect(url_for("home"))
-    return render_template("edit_vehicle.html", v=vehicle)
+        return redirect(url_for('index'))
 
-@app.route("/delete/<int:vehicle_id>", methods=["POST"])
-def delete_vehicle(vehicle_id):
-    from models import Vehicle
-    vehicle = Vehicle.query.get_or_404(vehicle_id)
-    db.session.delete(vehicle)
-    db.session.commit()
-    return redirect(url_for("home"))
+    return render_template('add_vehicle.html')
 
-# Punto de entrada para Render (gunicorn)
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+if __name__ == '__main__':
+    db.create_all()
+    app.run(debug=True)
