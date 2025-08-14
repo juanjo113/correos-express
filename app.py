@@ -26,13 +26,13 @@ ALERT_DAYS = 7
 with app.app_context():
     db.create_all()
 
-# Evitar error con HEAD requests
+# Evitar error con HEAD requests (Render health checks)
 @app.before_request
 def handle_head_requests():
     if request.method == "HEAD":
         return "", 200
 
-@app.route("/", methods=["GET", "HEAD"])
+@app.route("/", methods=["GET"])
 def home():
     q = request.args.get("q", "")
     vehicles = get_all_vehicles(q)
@@ -43,14 +43,14 @@ def home():
         config={"ALERT_DAYS": ALERT_DAYS}
     )
 
-@app.route("/send_alerts", methods=["GET", "HEAD"])
+@app.route("/send_alerts", methods=["GET"])
 def send_alerts():
     vehicles_due = get_vehicles_due_today()
     for vehicle in vehicles_due:
         send_email(vehicle)
     return f"Se enviaron {len(vehicles_due)} alertas."
 
-@app.route("/add", methods=["GET", "POST", "HEAD"])
+@app.route("/add", methods=["GET", "POST"])
 def add_vehicle():
     from models import Vehicle
     if request.method == "POST":
@@ -74,7 +74,7 @@ def add_vehicle():
         return redirect(url_for("home"))
     return render_template("add_vehicle.html")
 
-@app.route("/edit/<int:vehicle_id>", methods=["GET", "POST", "HEAD"])
+@app.route("/edit/<int:vehicle_id>", methods=["GET", "POST"])
 def edit_vehicle(vehicle_id):
     from models import Vehicle
     vehicle = Vehicle.query.get_or_404(vehicle_id)
