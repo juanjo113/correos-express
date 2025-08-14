@@ -1,36 +1,22 @@
-{% extends 'base.html' %}
-{% block content %}
-<h1 class="h4 mb-3">Añadir vehículo</h1>
-<form method="post">
-  <div class="row g-3">
-    <div class="col-md-4">
-      <label class="form-label">Marca</label>
-      <input required name="make" class="form-control" />
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Modelo</label>
-      <input required name="model" class="form-control" />
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Matrícula</label>
-      <input required name="plate" class="form-control" />
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">Email para avisos</label>
-      <input required type="email" name="owner_email" class="form-control" />
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Cambio de aceite (fecha)</label>
-      <input type="date" name="oil_date" class="form-control" />
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">ITV (fecha)</label>
-      <input type="date" name="itv_date" class="form-control" />
-    </div>
-  </div>
-  <div class="mt-4 d-flex gap-2">
-    <button class="btn btn-primary" type="submit">Guardar</button>
-    <a class="btn btn-secondary" href="{{ url_for('index') }}">Cancelar</a>
-  </div>
-</form>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Añadir Vehículo</title>
+</head>
+<body>
+    <h1>Añadir Vehículo</h1>
+    <form method="POST">
+        <label for="marca">Marca:</label>
+        <input type="text" id="marca" name="marca" required><br>
+        <label for="modelo">Modelo:</label>
+        <input type="text" id="modelo" name="modelo" required><br>
+        <label for="fecha_cambio_aceite">Fecha Cambio de Aceite:</label>
+        <input type="date" id="fecha_cambio_aceite" name="fecha_cambio_aceite" required><br>
+        <label for="fecha_itv">Fecha ITV:</label>
+        <input type="date" id="fecha_itv" name="fecha_itv" required><br>
+        <button type="submit">Añadir Vehículo</button>
+    </form>
+</body>
+</html>
