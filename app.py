@@ -26,7 +26,7 @@ ALERT_DAYS = 7
 with app.app_context():
     db.create_all()
 
-# Evitar error con HEAD requests (Render health checks)
+# Evitar error con HEAD requests (health check de Render)
 @app.before_request
 def handle_head_requests():
     if request.method == "HEAD":
@@ -97,5 +97,6 @@ def delete_vehicle(vehicle_id):
     db.session.commit()
     return redirect(url_for("home"))
 
+# Punto de entrada para Render (gunicorn)
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
